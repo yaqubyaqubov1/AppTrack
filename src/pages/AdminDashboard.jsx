@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './AdminDashboard.css'
 import Avatar from '../components/Avatar'
@@ -27,7 +27,6 @@ import {
   notifyDataChanged,
 } from '../store/studentsStore'
 
-// Tiny localStorage helpers for the admin-only notification inbox / preferences.
 function loadPersisted(key, fallback) {
   try {
     const raw = localStorage.getItem(key)
@@ -48,12 +47,11 @@ function savePersisted(key, value) {
 
 const PIE_COLORS = ['#7c3aed', '#06b6d4', '#22c55e', '#f97316', '#ef4444', '#8b5cf6', '#14b8a6']
 
-// Document categories shown inside every application
 const DOC_CATEGORIES = [
   { key: 'application', label: 'Applications', hint: 'Submitted application forms', emoji: '🗂️', color: '#6d28d9', tint: 'rgba(124,58,237,0.12)' },
   { key: 'transcript', label: 'Transcripts', hint: 'Official & unofficial transcripts', emoji: '📊', color: '#0e7490', tint: 'rgba(6,182,212,0.14)' },
   { key: 'recommendation', label: 'Recommendation Letters', hint: 'Letters from recommenders', emoji: '✉️', color: '#b45309', tint: 'rgba(249,115,22,0.14)' },
-  { key: 'other', label: 'Other Required PDFs', hint: 'Essays, CV, financials, etc.', emoji: '', color: '#15803d', tint: 'rgba(34,197,94,0.14)' },
+  { key: 'other', label: 'Other Required PDFs', hint: 'Essays, CV, financials, etc.', emoji: '📁', color: '#15803d', tint: 'rgba(34,197,94,0.14)' },
 ]
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -63,7 +61,6 @@ const APP_STATUS = ['Not Started', 'In Progress', 'Submitted', 'In Review', 'Clo
 const APP_DECISION = ['Pending', 'Accepted', 'Rejected', 'Waitlisted']
 const APP_RECOMMENDATION = ['Pending', 'Requested', 'Received']
 
-// Configurable notification types — admin chooses which alerts to receive.
 const NOTIFICATION_TYPES = [
   { key: 'visibility_request', label: 'Visibility requests', hint: 'When a student asks to make a field public or private', emoji: '👁️' },
   { key: 'deadline', label: 'Approaching deadlines', hint: 'When an application deadline is near', emoji: '⏰' },
@@ -71,8 +68,6 @@ const NOTIFICATION_TYPES = [
   { key: 'other', label: 'Other important issues', hint: 'Exceptions and system alerts', emoji: '⚠️' },
 ]
 
-// Dummy inbox — shape matches the student side's visibility requests so both dashboards
-// can share one Supabase `notifications` table.
 const INITIAL_NOTIFICATIONS = [
   { id: 'n2', type: 'visibility_request', status: 'pending', studentId: 3, studentName: 'Carla Nunez', field: 'profile', current: 'private', requested: 'public', message: 'Carla Nunez requested to make Profile public.' },
   { id: 'n3', type: 'deadline', status: 'unread', studentName: 'Alice Zhang', message: 'MIT application deadline is in 5 days (2026-12-21).' },
@@ -620,7 +615,7 @@ function ApplicationModal({ open, studentId, application, onClose, onSave }) {
   )
 }
 
-function LicenseModal({ open, studentId, license, onClose, onSave, onLicenseMediaUpload, onLicenseMediaRemove }) {
+function LicenseModal({ open, studentId, license, onClose, onSave }) {
   const [form, setForm] = useState(emptyLicense())
 
   useEffect(() => {
@@ -749,8 +744,6 @@ function LicenseModal({ open, studentId, license, onClose, onSave, onLicenseMedi
     </div>
   )
 }
-
-
 
 function NotificationsPanel({
   open,
@@ -909,8 +902,6 @@ function NotificationsPanel({
   )
 }
 
-// ---- MAIN COMPONENT WITH LOCAL STUDENTS STATE + OPTIMISTIC UPDATES ----
-
 export default function AdminDashboard() {
   const studentsData = useStudents()
   const [students, setStudents] = useState([])
@@ -929,7 +920,6 @@ export default function AdminDashboard() {
   const [profileModal, setProfileModal] = useState({ open: false, studentId: null })
 
   const [notifOpen, setNotifOpen] = useState(false)
-  // Notifications + preferences are persisted too, so the inbox is identical after refresh.
   const [notifications, setNotifications] = useState(() =>
     loadPersisted('apptrack.notifications.v1', INITIAL_NOTIFICATIONS),
   )
@@ -942,7 +932,6 @@ export default function AdminDashboard() {
     }),
   )
 
-  // Sync local students state with global hook data
   useEffect(() => {
     setStudents(studentsData || [])
   }, [studentsData])
@@ -968,7 +957,6 @@ export default function AdminDashboard() {
     )
   }
 
-  // Approving a visibility request applies the change globally through the store.
   function approveVisibilityRequest(notification) {
     const { studentId, field, requested } = notification
     setVisibility(studentId, field, requested)
@@ -1060,7 +1048,6 @@ export default function AdminDashboard() {
     try {
       await deleteStudent(studentId)
 
-      // Optimistically remove from local state
       setStudents((prev) => prev.filter((s) => s.id !== studentId))
 
       if (selectedStudentId === studentId) {
@@ -1072,10 +1059,9 @@ export default function AdminDashboard() {
     }
   }
 
-  // Photo handlers write to the global store AND update local state.
   async function handleStudentPhotoUpload(studentId, file) {
     if (!file) return
-    const url = await fileToDataUrl(file) // data URL persists across refresh
+    const url = await fileToDataUrl(file)
     setPhoto(studentId, url, file.name)
     setStudents((prev) =>
       prev.map((s) =>
@@ -1093,9 +1079,7 @@ export default function AdminDashboard() {
     )
   }
 
-  // Save profile: optimistic update then backend
   async function handleSaveProfile(studentId, data) {
-    // Optimistically update local state
     setStudents((prev) =>
       prev.map((s) =>
         s.id === studentId
@@ -1121,9 +1105,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // Visibility: optimistic update then backend (instant UI feedback)
   async function handleSetVisibility(studentId, key, value) {
-    // Optimistically update local state first for instant UI feedback
     const fieldKey = key === 'profile' ? 'profile' :
                      key === 'photo' ? 'photo' :
                      key === 'email' ? 'email' :
@@ -1148,15 +1130,12 @@ export default function AdminDashboard() {
       await setVisibility(studentId, key, value)
     } catch (error) {
       console.error('Set visibility error:', error)
-      // Revert on failure - reload from store
       setStudents(studentsData || [])
       alert(error?.message || 'Something went wrong while updating visibility.')
     }
   }
 
-  // Update notes: optimistic update then backend
   async function handleUpdateNotes(studentId, notes) {
-    // Optimistically update local state
     setStudents((prev) =>
       prev.map((s) =>
         s.id === studentId ? { ...s, notes } : s,
@@ -1167,13 +1146,11 @@ export default function AdminDashboard() {
       await updateNotes(studentId, notes)
     } catch (error) {
       console.error('Update notes error:', error)
-      // Revert on failure
       setStudents(studentsData || [])
       alert(error?.message || 'Something went wrong while saving notes.')
     }
   }
 
-  // Application delete: call backend + update local state
   async function handleDeleteApplication(studentId, appId) {
     try {
       await deleteApplication(studentId, appId)
@@ -1192,7 +1169,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // Application create/update: backend + merge into local state
   async function handleSaveApplication(studentId, form) {
     try {
       const result = await saveApplication(studentId, form)
@@ -1216,7 +1192,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // Application visibility: backend + local state update
   async function handleSetApplicationVisibility(studentId, appId, visibility) {
     try {
       const updated = await setApplicationVisibility(studentId, appId, visibility)
@@ -1238,95 +1213,93 @@ export default function AdminDashboard() {
   }
 
   async function handleUploadApplicationFile(studentId, applicationId, category, file) {
-  if (!file) return
+    if (!file) return
 
-  try {
-    const uploadedDocument = await uploadApplicationFile(studentId, applicationId, category, file)
+    try {
+      const uploadedDocument = await uploadApplicationFile(studentId, applicationId, category, file)
 
-    setStudents((prev) =>
-      addDocumentToStudentApplication(
-        prev,
-        studentId,
-        applicationId,
-        category,
-        uploadedDocument
+      setStudents((prev) =>
+        addDocumentToStudentApplication(
+          prev,
+          studentId,
+          applicationId,
+          category,
+          uploadedDocument
+        )
       )
-    )
-  } catch (error) {
-    console.error('Upload application file error:', error)
-    alert(error?.message || 'Something went wrong while uploading the file.')
+    } catch (error) {
+      console.error('Upload application file error:', error)
+      alert(error?.message || 'Something went wrong while uploading the file.')
+    }
   }
-}
 
-async function handleRemoveApplicationFile(studentId, applicationId, category, docId) {
-  try {
-    await removeApplicationFile(studentId, applicationId, category, docId)
+  async function handleRemoveApplicationFile(studentId, applicationId, category, docId) {
+    try {
+      await removeApplicationFile(studentId, applicationId, category, docId)
 
-    setStudents((prev) =>
-      removeDocumentFromStudentApplication(
-        prev,
-        studentId,
-        applicationId,
-        category,
-        docId
+      setStudents((prev) =>
+        removeDocumentFromStudentApplication(
+          prev,
+          studentId,
+          applicationId,
+          category,
+          docId
+        )
       )
-    )
-  } catch (error) {
-    console.error('Remove application file error:', error)
-    alert(error?.message || 'Something went wrong while removing the file.')
+    } catch (error) {
+      console.error('Remove application file error:', error)
+      alert(error?.message || 'Something went wrong while removing the file.')
+    }
   }
-}
 
   function addDocumentToStudentApplication(prevStudents, studentId, applicationId, category, document) {
-  return prevStudents.map((student) => {
-    if (student.id !== studentId) return student
+    return prevStudents.map((student) => {
+      if (student.id !== studentId) return student
 
-    return {
-      ...student,
-      applications: (student.applications || []).map((application) => {
-        if (application.id !== applicationId) return application
+      return {
+        ...student,
+        applications: (student.applications || []).map((application) => {
+          if (application.id !== applicationId) return application
 
-        const currentDocs = application.documents || {}
-        const currentCategoryDocs = currentDocs[category] || []
+          const currentDocs = application.documents || {}
+          const currentCategoryDocs = currentDocs[category] || []
 
-        return {
-          ...application,
-          documents: {
-            ...currentDocs,
-            [category]: [...currentCategoryDocs, document],
-          },
-        }
-      }),
-    }
-  })
-}
+          return {
+            ...application,
+            documents: {
+              ...currentDocs,
+              [category]: [...currentCategoryDocs, document],
+            },
+          }
+        }),
+      }
+    })
+  }
 
+  function removeDocumentFromStudentApplication(prevStudents, studentId, applicationId, category, docId) {
+    return prevStudents.map((student) => {
+      if (student.id !== studentId) return student
 
-function removeDocumentFromStudentApplication(prevStudents, studentId, applicationId, category, docId) {
-  return prevStudents.map((student) => {
-    if (student.id !== studentId) return student
+      return {
+        ...student,
+        applications: (student.applications || []).map((application) => {
+          if (application.id !== applicationId) return application
 
-    return {
-      ...student,
-      applications: (student.applications || []).map((application) => {
-        if (application.id !== applicationId) return application
+          const currentDocs = application.documents || {}
+          const currentCategoryDocs = currentDocs[category] || []
 
-        const currentDocs = application.documents || {}
-        const currentCategoryDocs = currentDocs[category] || []
+          return {
+            ...application,
+            documents: {
+              ...currentDocs,
+              [category]: currentCategoryDocs.filter((doc) => doc.id !== docId),
+            },
+          }
+        }),
+      }
+    })
+  }
 
-        return {
-          ...application,
-          documents: {
-            ...currentDocs,
-            [category]: currentCategoryDocs.filter((doc) => doc.id !== docId),
-          },
-        }
-      }),
-    }
-  })
-}
-
-  // License create/update: backend + merge into local state
   async function handleSaveLicense(studentId, form) {
     try {
       const result = await saveLicense(studentId, form)
@@ -1350,7 +1323,6 @@ function removeDocumentFromStudentApplication(prevStudents, studentId, applicati
     }
   }
 
-  // License delete: backend + remove from local state
   async function handleDeleteLicense(studentId, licenseId) {
     try {
       await deleteLicense(studentId, licenseId)
@@ -1368,252 +1340,469 @@ function removeDocumentFromStudentApplication(prevStudents, studentId, applicati
     }
   }
 
-  // License media upload: backend + local state update
-  async function handleLicenseMediaUpload(studentId, licenseId, file) {
-    if (!file) return
-
-    try {
-      const uploadedMedia = await uploadLicenseMediaFile(studentId, licenseId, file)
-
-      setStudents((prev) =>
-        prev.map((s) => {
-          if (s.id !== studentId) return s
-          const lic = s.licenses || []
-          return {
-            ...s,
-            licenses: lic.map((l) =>
-              l.id === licenseId
-                ? { ...l, media: [...(l.media || []), uploadedMedia] }
-                : l
-            ),
-          }
-        }),
-      )
-    } catch (error) {
-      console.error('Upload license media error:', error)
-      alert(error?.message || 'Something went wrong while uploading the license media.')
-    }
-  }
-
-  // License media remove: backend + local state update
-  async function handleLicenseMediaRemove(studentId, mediaId) {
-    try {
-      await deleteLicenseMediaFile(studentId, mediaId)
-
-      setStudents((prev) =>
-        prev.map((s) => {
-          if (s.id !== studentId) return s
-          const lic = s.licenses || []
-          return {
-            ...s,
-            licenses: lic.map((l) => ({
-              ...l,
-              media: (l.media || []).filter((m) => m.id !== mediaId),
-            })),
-          }
-        }),
-      )
-    } catch (error) {
-      console.error('Remove license media error:', error)
-      alert(error?.message || 'Something went wrong while removing the license media.')
-    }
-  }
-
-  // License visibility: backend + local state update
-  async function handleSetLicenseVisibility(studentId, licenseId, visibility) {
-    try {
-      const updated = await setLicenseVisibility(studentId, licenseId, visibility)
-
-      setStudents((prev) =>
-        prev.map((s) => {
-          if (s.id !== studentId) return s
-          const lic = s.licenses || []
-          return {
-            ...s,
-            licenses: lic.map((l) => (l.id === licenseId ? { ...l, visibility: updated.visibility } : l)),
-          }
-        }),
-      )
-    } catch (error) {
-      console.error('Set license visibility error:', error)
-      alert(error?.message || 'Something went wrong while updating license visibility.')
-    }
-  }
-
-  function openAddLicense(studentId) {
-    setLicenseModal({ open: true, studentId, license: null })
-  }
-
-  function openEditLicense(studentId, licenseId) {
-    const st = students.find((s) => s.id === studentId)
-    const lic = st?.licenses?.find((l) => l.id === licenseId) || null
-    setLicenseModal({ open: true, studentId, license: lic })
-  }
-
-  function closeLicenseModal() {
-    setLicenseModal({ open: false, studentId: null, license: null })
-  }
-
-  function openAddApplication(studentId) {
-    setAppModal({ open: true, studentId, application: null })
-  }
-
-  function openEditApplication(studentId, appId) {
-    const st = students.find((s) => s.id === studentId)
-    const app = st?.applications?.find((a) => a.id === appId) || null
-    setAppModal({ open: true, studentId, application: app })
-  }
-
-  function closeAppModal() {
-    setAppModal({ open: false, studentId: null, application: null })
-  }
-
-  function openEditProfile(studentId) {
-    setProfileModal({ open: true, studentId })
-  }
-
-  function closeProfileModal() {
-    setProfileModal({ open: false, studentId: null })
-  }
-
   return (
     <div className="app-shell">
-      <div className="ambient ambient--one"></div>
-      <div className="ambient ambient--two"></div>
+      <div className="ambient ambient--one" />
+      <div className="ambient ambient--two" />
 
       <header className="topbar">
         <div>
-          <h1 className="topbar__title">Student Manager</h1>
-          <p className="topbar__subtitle">
-            Admin overview, private editing access, and student application control
-          </p>
+          <h1 className="topbar__title">Admin Dashboard</h1>
+          <p className="topbar__subtitle">Manage students and application profiles</p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button className="notification-btn" onClick={() => setNotifOpen(true)}>
-            <span className="notification-btn__icon">🔔</span>
-            Notifications
-            {notifCount > 0 && <span className="notification-btn__count">{notifCount}</span>}
-          </button>
-          <button
-            type="button"
-            className="notification-btn"
-            onClick={async () => {
-              await signOut()
-              navigate('/')
-            }}
-            style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)', padding: '10px 16px' }}
-          >
-            Sign out
-          </button>
-        </div>
+        <button
+          type="button"
+          className="notification-btn"
+          onClick={() => setNotifOpen(true)}
+        >
+          <span>Notifications</span>
+          {notifCount > 0 && <span className="notification-btn__count">{notifCount}</span>}
+        </button>
       </header>
 
       <main className="dashboard-content">
         <section className="stats-section">
-          <TotalStudentsCard total={filteredStudents.length} />
+          <TotalStudentsCard total={students.length} />
 
           <div className="charts-grid">
-            <PieChartCard title="Major Distribution" data={majorData} />
-            <PieChartCard title="University Distribution" data={universityData} />
-            <PieChartCard title="Gender Distribution" data={genderData} />
-            <PieChartCard title="Decision Rate" data={decisionData} />
+            <PieChartCard title="Students by Major" data={majorData} />
+            <PieChartCard title="Students by University" data={universityData} />
+            <PieChartCard title="Students by Gender" data={genderData} />
+            <PieChartCard title="Students by Decision" data={decisionData} />
           </div>
         </section>
 
         <section className="students-section">
           <div className="filters-bar">
-            <select
-              value={filterMajor}
-              onChange={(e) => { setFilterMajor(e.target.value); setCurrentPage(1) }}
-            >
+            <select value={filterMajor} onChange={(e) => { setFilterMajor(e.target.value); setCurrentPage(1); }}>
               <option value="all">All Majors</option>
-              {majors.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
+              {majors.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
 
-            <select
-              value={filterUniversity}
-              onChange={(e) => { setFilterUniversity(e.target.value); setCurrentPage(1) }}
-            >
+            <select value={filterUniversity} onChange={(e) => { setFilterUniversity(e.target.value); setCurrentPage(1); }}>
               <option value="all">All Universities</option>
-              {universities.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
+              {universities.map((u) => <option key={u} value={u}>{u}</option>)}
             </select>
 
-            <select
-              value={filterGender}
-              onChange={(e) => { setFilterGender(e.target.value); setCurrentPage(1) }}
-            >
+            <select value={filterGender} onChange={(e) => { setFilterGender(e.target.value); setCurrentPage(1); }}>
               <option value="all">All Genders</option>
-              {genders.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
+              {genders.map((g) => <option key={g} value={g}>{g}</option>)}
             </select>
 
-            <select
-              value={filterDecision}
-              onChange={(e) => { setFilterDecision(e.target.value); setCurrentPage(1) }}
-            >
+            <select value={filterDecision} onChange={(e) => { setFilterDecision(e.target.value); setCurrentPage(1); }}>
               <option value="all">All Decisions</option>
-              {decisions.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
+              {decisions.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
 
           <div className="students-grid">
             {currentStudents.map((student) => (
-              <StudentCard
-                key={student.id}
-                student={student}
-                onOpen={openStudent}
-              />
+              <StudentCard key={student.id} student={student} onOpen={openStudent} />
             ))}
           </div>
 
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            setCurrentPage={setCurrentPage}
-          />
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              setCurrentPage={setCurrentPage}
+            />
+          )}
         </section>
       </main>
 
-      <PublicStudentDrawer
-      student={selectedStudent}
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      onClose={closeDrawer}
-      onEditProfile={openEditProfile}
-      onDeleteStudent={handleDeleteStudent}
-      onUpdateNotes={handleUpdateNotes}
-      onSetVisibility={handleSetVisibility}
-      onToggleApplicationExpanded={handleToggleApplicationExpanded}
-      expandedApplications={expandedApplications}
-      onAddApplication={openAddApplication}
-      onEditApplication={openEditApplication}
-      onDeleteApplication={handleDeleteApplication}
-      onSetApplicationVisibility={handleSetApplicationVisibility}
-      onUploadApplicationFile={handleUploadApplicationFile}
-      onRemoveApplicationFile={handleRemoveApplicationFile}
-      onStudentPhotoUpload={handleStudentPhotoUpload}
-      onRemoveStudentPhoto={handleRemoveStudentPhoto}
-      licenses={selectedStudent?.licenses}
-      onAddLicense={openAddLicense}
-      onEditLicense={openEditLicense}
-      onDeleteLicense={handleDeleteLicense}
-      onSetLicenseVisibility={handleSetLicenseVisibility}
-      onLicenseMediaUpload={handleLicenseMediaUpload}
-      onLicenseMediaRemove={handleLicenseMediaRemove}
-    />
+      {selectedStudent && (
+        <>
+          <div className="drawer-backdrop" onClick={closeDrawer} />
+
+          <aside className="admin-drawer">
+            <div className="admin-drawer__header">
+              <div>
+                <p className="admin-drawer__eyebrow">Student Details</p>
+                <h2>{selectedStudent.fullName}</h2>
+                <span className="admin-drawer__subtext">{selectedStudent.email}</span>
+              </div>
+              <button type="button" className="drawer-close" onClick={closeDrawer}>✕</button>
+            </div>
+
+            <div className="admin-drawer__hero-block">
+              <div className="student-photo-card">
+                <div className="student-photo-preview student-photo-preview--interactive">
+                  <Avatar
+                    name={selectedStudent.fullName}
+                    photoUrl={selectedStudent.photoUrl}
+                    size="hero"
+                    className="student-photo-avatar"
+                  />
+                  <div className="student-photo-overlay">
+                    <label className="student-photo-overlay__btn">
+                      Upload
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="file-input-hidden"
+                        onChange={(e) => handleStudentPhotoUpload(selectedStudent.id, e.target.files?.[0])}
+                      />
+                    </label>
+                    {selectedStudent.photoUrl && (
+                      <button
+                        type="button"
+                        className="student-photo-overlay__btn student-photo-overlay__btn--danger"
+                        onClick={() => handleRemoveStudentPhoto(selectedStudent.id)}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-drawer__hero-main">
+                <div className="admin-drawer__hero--compact">
+                  <div className="hero-stat">
+                    <span>Major</span>
+                    <strong>{selectedStudent.major || 'N/A'}</strong>
+                  </div>
+                  <div className="hero-stat">
+                    <span>University</span>
+                    <strong>{selectedStudent.university || 'N/A'}</strong>
+                  </div>
+                  <div className="hero-stat">
+                    <span>Applications</span>
+                    <strong>{(selectedStudent.applications || []).length}</strong>
+                  </div>
+                  <div className="hero-stat">
+                    <span>Licenses</span>
+                    <strong>{(selectedStudent.licenses || []).length}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <nav className="drawer-tabs">
+              <button
+                type="button"
+                className={`drawer-tab ${activeTab === 'profile' ? 'drawer-tab--active' : ''}`}
+                onClick={() => setActiveTab('profile')}
+              >
+                Profile Info
+              </button>
+              <button
+                type="button"
+                className={`drawer-tab ${activeTab === 'applications' ? 'drawer-tab--active' : ''}`}
+                onClick={() => setActiveTab('applications')}
+              >
+                Applications ({(selectedStudent.applications || []).length})
+              </button>
+              <button
+                type="button"
+                className={`drawer-tab ${activeTab === 'licenses' ? 'drawer-tab--active' : ''}`}
+                onClick={() => setActiveTab('licenses')}
+              >
+                Certifications ({(selectedStudent.licenses || []).length})
+              </button>
+            </nav>
+
+            <div className="admin-drawer__content">
+              {activeTab === 'profile' && (
+                <div className="drawer-panel">
+                  <div className="section-head">
+                    <h3>Personal Information</h3>
+                    <button
+                      type="button"
+                      className="solid-btn solid-btn--sm"
+                      onClick={() => setProfileModal({ open: true, studentId: selectedStudent.id })}
+                    >
+                      Edit Profile
+                    </button>
+                  </div>
+
+                  <div className="info-grid">
+                    <div className="info-card info-card--with-toggle">
+                      <div>
+                        <span>Full Name</span>
+                        <strong>{selectedStudent.fullName}</strong>
+                      </div>
+                      <VisibilityToggle
+                        value={selectedStudent.visibility?.profile || 'private'}
+                        onChange={(v) => handleSetVisibility(selectedStudent.id, 'profile', v)}
+                      />
+                    </div>
+
+                    <div className="info-card">
+                      <span>Email</span>
+                      <strong>{selectedStudent.email || 'Not provided'}</strong>
+                    </div>
+
+                    <div className="info-card">
+                      <span>Phone</span>
+                      <strong>{selectedStudent.phone || 'Not provided'}</strong>
+                    </div>
+
+                    <div className="info-card">
+                      <span>Gender</span>
+                      <strong>{selectedStudent.gender || 'Not specified'}</strong>
+                    </div>
+
+                    <div className="info-card">
+                      <span>Major</span>
+                      <strong>{selectedStudent.major || 'Not specified'}</strong>
+                    </div>
+
+                    <div className="info-card">
+                      <span>University</span>
+                      <strong>{selectedStudent.university || 'Not specified'}</strong>
+                    </div>
+                  </div>
+
+                  <div className="notes-block">
+                    <div className="section-head">
+                      <h3>Admin Notes</h3>
+                    </div>
+                    <div className="notes-box">
+                      <textarea
+                        value={selectedStudent.notes || ''}
+                        placeholder="Internal staff notes regarding this student..."
+                        onChange={(e) => handleUpdateNotes(selectedStudent.id, e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="mini-btn mini-btn--danger"
+                    style={{ marginTop: '12px', alignSelf: 'flex-start' }}
+                    onClick={() => handleDeleteStudent(selectedStudent.id)}
+                  >
+                    Delete Student Profile
+                  </button>
+                </div>
+              )}
+
+              {activeTab === 'applications' && (
+                <div className="drawer-panel">
+                  <div className="section-head">
+                    <h3>University Applications</h3>
+                    <button
+                      type="button"
+                      className="solid-btn solid-btn--sm"
+                      onClick={() => setAppModal({ open: true, studentId: selectedStudent.id, application: null })}
+                    >
+                      <span className="btn-plus">+</span> Add Application
+                    </button>
+                  </div>
+
+                  <div className="application-list">
+                    {(selectedStudent.applications || []).length > 0 ? (
+                      selectedStudent.applications.map((app) => {
+                        const isOpen = expandedApplications.includes(app.id)
+                        return (
+                          <article
+                            key={app.id}
+                            className={`application-card ${isOpen ? 'application-card--open' : ''}`}
+                          >
+                            <button
+                              type="button"
+                              className="application-card__top"
+                              onClick={() => handleToggleApplicationExpanded(app.id)}
+                            >
+                              <div className="application-card__id">
+                                <div className="application-card__logo">
+                                  {(app.university || 'U')[0]}
+                                </div>
+                                <div className="application-card__id-text">
+                                  <h4>{app.university}</h4>
+                                  <p>{app.program || app.major || 'No program specified'}</p>
+                                </div>
+                              </div>
+
+                              <div className="application-card__top-meta">
+                                <StatusBadge variant={statusVariant(app.status)}>{app.status}</StatusBadge>
+                                <span className="chevron">{isOpen ? '▲' : '▼'}</span>
+                              </div>
+                            </button>
+
+                            {isOpen && (
+                              <div className="application-card__expand">
+                                <div className="application-toolbar">
+                                  <VisibilityToggle
+                                    value={app.visibility || 'private'}
+                                    onChange={(v) => handleSetApplicationVisibility(selectedStudent.id, app.id, v)}
+                                  />
+
+                                  <div className="application-toolbar__actions">
+                                    <button
+                                      type="button"
+                                      className="mini-btn"
+                                      onClick={() => setAppModal({ open: true, studentId: selectedStudent.id, application: app })}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="mini-btn mini-btn--danger"
+                                      onClick={() => handleDeleteApplication(selectedStudent.id, app.id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="application-card__meta">
+                                  <div className="meta-cell">
+                                    <span>Term</span>
+                                    <strong>{app.term || 'N/A'}</strong>
+                                  </div>
+                                  <div className="meta-cell">
+                                    <span>Deadline</span>
+                                    <strong>{app.deadline || 'N/A'}</strong>
+                                  </div>
+                                  <div className="meta-cell">
+                                    <span>Decision</span>
+                                    <strong>{app.decision || 'Pending'}</strong>
+                                  </div>
+                                  <div className="meta-cell">
+                                    <span>Recommendation</span>
+                                    <strong>{app.recommendation || 'Pending'}</strong>
+                                  </div>
+                                </div>
+
+                                {app.notes && (
+                                  <div className="application-notes">
+                                    <span>Notes</span>
+                                    <p>{app.notes}</p>
+                                  </div>
+                                )}
+
+                                <div className="doc-groups">
+                                  {DOC_CATEGORIES.map((cat) => (
+                                    <DocumentGroup
+                                      key={cat.key}
+                                      student={selectedStudent}
+                                      application={app}
+                                      category={cat}
+                                      onUpload={handleUploadApplicationFile}
+                                      onRemove={handleRemoveApplicationFile}
+                                      onOpenInline={(doc) => window.open(doc.url, '_blank')}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </article>
+                        )
+                      })
+                    ) : (
+                      <div className="empty-state empty-state--cert">
+                        <div className="empty-state__icon">🗂️</div>
+                        <h4>No applications added</h4>
+                        <p>Click "+ Add Application" above to track a new university application.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'licenses' && (
+                <div className="drawer-panel">
+                  <div className="section-head">
+                    <h3>Licenses &amp; Certifications</h3>
+                    <button
+                      type="button"
+                      className="solid-btn solid-btn--sm"
+                      onClick={() => setLicenseModal({ open: true, studentId: selectedStudent.id, license: null })}
+                    >
+                      <span className="btn-plus">+</span> Add Certification
+                    </button>
+                  </div>
+
+                  {(selectedStudent.licenses || []).length > 0 ? (
+                    <div className="cert-list">
+                      {selectedStudent.licenses.map((cert) => (
+                        <article key={cert.id} className="cert-item">
+                          <div className="cert-item__logo">
+                            {(cert.issuer || cert.name || 'C')[0]}
+                          </div>
+
+                          <div className="cert-item__body">
+                            <div className="cert-item__row">
+                              <h4 className="cert-item__name">{cert.name}</h4>
+                              <div className="cert-item__actions">
+                                <VisibilityToggle
+                                  value={cert.visibility || 'private'}
+                                  onChange={(v) => handleSaveLicense(selectedStudent.id, { ...cert, visibility: v })}
+                                />
+                                <button
+                                  type="button"
+                                  className="icon-btn"
+                                  title="Edit"
+                                  onClick={() => setLicenseModal({ open: true, studentId: selectedStudent.id, license: cert })}
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  type="button"
+                                  className="icon-btn icon-btn--danger"
+                                  title="Delete"
+                                  onClick={() => handleDeleteLicense(selectedStudent.id, cert.id)}
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+
+                            {cert.issuer && <p className="cert-item__issuer">{cert.issuer}</p>}
+
+                            <p className="cert-item__meta">
+                              {(cert.issueMonth || cert.issueYear) && (
+                                <span>Issued {cert.issueMonth} {cert.issueYear}</span>
+                              )}
+                              {(cert.expireMonth || cert.expireYear) && (
+                                <span> · Expires {cert.expireMonth} {cert.expireYear}</span>
+                              )}
+                            </p>
+
+                            {cert.credentialId && (
+                              <p className="cert-item__cred">
+                                Credential ID: <strong>{cert.credentialId}</strong>
+                              </p>
+                            )}
+
+                            {cert.credentialUrl && (
+                              <div className="cert-item__foot">
+                                <a
+                                  href={cert.credentialUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="pill-link"
+                                >
+                                  Show credential ↗
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty-state empty-state--cert">
+                      <div className="empty-state__icon">📜</div>
+                      <h4>No certifications added</h4>
+                      <p>Click "+ Add Certification" to add licenses or test scores.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </aside>
+        </>
+      )}
 
       <ProfileModal
         open={profileModal.open}
         student={profileModalStudent}
-        onClose={closeProfileModal}
+        onClose={() => setProfileModal({ open: false, studentId: null })}
         onSave={handleSaveProfile}
       />
 
@@ -1621,7 +1810,7 @@ function removeDocumentFromStudentApplication(prevStudents, studentId, applicati
         open={appModal.open}
         studentId={appModal.studentId}
         application={appModal.application}
-        onClose={closeAppModal}
+        onClose={() => setAppModal({ open: false, studentId: null, application: null })}
         onSave={handleSaveApplication}
       />
 
@@ -1629,7 +1818,7 @@ function removeDocumentFromStudentApplication(prevStudents, studentId, applicati
         open={licenseModal.open}
         studentId={licenseModal.studentId}
         license={licenseModal.license}
-        onClose={closeLicenseModal}
+        onClose={() => setLicenseModal({ open: false, studentId: null, license: null })}
         onSave={handleSaveLicense}
       />
 
