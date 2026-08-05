@@ -1,4 +1,4 @@
-﻿* {
+* {
   box-sizing: border-box;
 }
 
@@ -354,7 +354,6 @@ textarea {
     linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
 }
 
-/* The shared Avatar renders inside the card; give it a professional ring. */
 .student-card__avatar-el {
   border: 4px solid #ffffff;
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
@@ -425,8 +424,6 @@ textarea {
   color: #64748b;
   font-weight: 700;
 }
-
-/* ---------- Drawer ---------- */
 
 .drawer-backdrop {
   position: fixed;
@@ -691,8 +688,6 @@ textarea {
   font-size: 1rem;
 }
 
-/* ---------- Buttons ---------- */
-
 .solid-btn,
 .ghost-btn {
   display: inline-flex;
@@ -738,8 +733,6 @@ textarea {
   line-height: 1;
 }
 
-/* ---------- Section head ---------- */
-
 .section-head {
   display: flex;
   align-items: center;
@@ -774,8 +767,6 @@ textarea {
   font-weight: 700;
   white-space: nowrap;
 }
-
-/* ---------- Applications ---------- */
 
 .application-list {
   display: flex;
@@ -907,8 +898,6 @@ textarea {
   color: #111827;
   font-size: 0.95rem;
 }
-
-/* ---------- Document groups ---------- */
 
 .doc-groups {
   display: grid;
@@ -1113,8 +1102,6 @@ textarea {
   color: #94a3b8;
 }
 
-/* ---------- Status badges ---------- */
-
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -1155,8 +1142,6 @@ textarea {
   color: #475569;
 }
 
-/* ---------- Notes ---------- */
-
 .notes-block {
   display: flex;
   flex-direction: column;
@@ -1186,8 +1171,6 @@ textarea {
   border-color: rgba(251, 191, 36, 0.24);
   font-weight: 600;
 }
-
-/* ---------- Empty states ---------- */
 
 .empty-state {
   padding: 22px;
@@ -1222,8 +1205,6 @@ textarea {
   margin: 0 0 8px;
   color: #64748b;
 }
-
-/* ---------- Licenses & Certifications (LinkedIn-style) ---------- */
 
 .cert-list {
   display: flex;
@@ -1369,8 +1350,6 @@ textarea {
   margin-left: 2px;
 }
 
-/* ---------- Modal (Add / Edit license) ---------- */
-
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1482,8 +1461,6 @@ textarea {
   padding-top: 8px;
   border-top: 1px solid #eef2f7;
 }
-
-/* ---------- Visibility (public / private) ---------- */
 
 .vis-toggle {
   display: inline-flex;
@@ -1601,8 +1578,6 @@ textarea {
   overflow-wrap: anywhere;
 }
 
-/* ---------- Application toolbar / notes ---------- */
-
 .application-toolbar {
   display: flex;
   align-items: center;
@@ -1641,8 +1616,6 @@ textarea {
   line-height: 1.55;
 }
 
-/* ---------- Public tag on student list photo ---------- */
-
 .student-card__public-tag {
   position: absolute;
   top: 12px;
@@ -1655,8 +1628,6 @@ textarea {
   font-weight: 800;
   backdrop-filter: blur(6px);
 }
-
-/* ---------- Modal textarea + inline field ---------- */
 
 .field textarea {
   width: 100%;
@@ -1684,8 +1655,6 @@ textarea {
   justify-content: space-between;
   gap: 12px;
 }
-
-/* ---------- Animations ---------- */
 
 @keyframes riseUp {
   from {
@@ -1761,8 +1730,6 @@ textarea {
     transform: translateY(0) scale(1);
   }
 }
-
-/* ---------- Responsive ---------- */
 
 @media (max-width: 1280px) {
   .chart-card__content {
@@ -1871,8 +1838,6 @@ textarea {
   }
 }
 
-/* ---------- Notifications panel ---------- */
-
 .notif-drawer {
   display: flex;
   flex-direction: column;
@@ -1932,7 +1897,6 @@ textarea {
   font-size: 0.8rem;
 }
 
-/* Toggle switch */
 .switch {
   flex: 0 0 auto;
   width: 46px;
@@ -2099,4 +2063,3 @@ textarea {
   border: 0;
   background: #fff;
 }
-
